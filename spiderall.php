@@ -25,22 +25,18 @@ function queryAll($category, $page, $times){
             $searchUrl = QUERY_URL.$category.';'.$page;
             $tableName = $category;
             $sql_c = sqlCREATE($tableName);
-            
-            
             break;
 
         case 'countries':
-            $name = issetSome($name, 'CN');
+            $name = issetSome('name', 'CN');
             $searchUrl = QUERY_URL.$category.';'.$page.'/'.$name;
-            $tableName = $category.$name;
+            $tableName = $category.'_'.$name;
             $sql_c = sqlCREATE($tableName);
-            
-
             break;
 
         case 'category':
-            $name = issetSome($name, 'Adult');
-            $tableName = $category.$name;
+            $name = issetSome('name', 'Adult');
+            $tableName = $category.'_'.$name;
             $sql_c = sqlCREATE($tableName);
 
             //这个name可以是这样 Adult/Arts
@@ -67,13 +63,21 @@ function queryAll($category, $page, $times){
         $li_name = pq($LI)->find('.desc-paragraph')->find('a')->text();
         $li_intro = pq($LI)->find('.description')->text();
     }
-    $array_Rank = explode ('-', preg_replace('/\s/','-', $li_Rank));
-    $array_name = explode ('-', preg_replace('/\s/','-', $li_name));
-    $array_intro = explode ('--' ,preg_replace('/\n/','--', $li_intro));
+    $array_Rank = explode ('===', preg_replace('/\s/','===', $li_Rank));
+    $array_name = explode ('===', preg_replace('/\s/','===', $li_name));
+    $array_intro = explode ('===' ,preg_replace('/\n/','===', $li_intro));
+
+    if (empty($li_Rank)) {
+        customJsonRes('404', 'no data', 'check page');
+    } 
 
     sqlINSERT_query($array_Rank, $array_name, $array_intro, $tableName);
-    echo '分类：'.$category.'；'.'页码：'.$page.'收录完成。';
 
+    $result = array(
+        'tableName'=>$tableName,
+        'page'=>$page
+    );
+    customJsonRes('200', 'success', $result);
 }
 
 
@@ -106,7 +110,7 @@ function sqlCREATE ($names){
 
     $names = strtolower(trim($names));
     //$names = preg_replace('/\\/', '_', $names);
-    return "CREATE TABLE alexa_top_".$names." (
+    return  "CREATE TABLE alexa_top_".$names." (
         `id` int(5) unsigned NOT NULL AUTO_INCREMENT,
         `rank` int(5) DEFAULT '0',
         `name` varchar(50) CHARACTER SET utf8 DEFAULT '0',
@@ -115,6 +119,7 @@ function sqlCREATE ($names){
         `type` int(1) DEFAULT '1',
         PRIMARY KEY (`id`)
     )";
+
 }
 /*
 
